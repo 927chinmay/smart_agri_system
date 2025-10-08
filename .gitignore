@@ -1,0 +1,11 @@
+#Ignore the environment folder created by Python
+venv/
+pycache/
+
+#-- CRITICAL: Ignore the massive dataset folder ---
+plantvillage dataset/
+
+#Ignore temporary uploaded images in the static folder
+static/uploaded_image.jpg
+
+smart_agri_weights.weights.h5
