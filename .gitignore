@@ -8,4 +8,3 @@ plantvillage dataset/
 #Ignore temporary uploaded images in the static folder
 static/uploaded_image.jpg
 
-smart_agri_weights.weights.h5
