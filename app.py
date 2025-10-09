@@ -79,27 +79,44 @@ CLASS_NAMES = [
 ]
     
 # --- Prediction Function ---
+# app.py
+
+# --- Define the threshold for accepting a prediction (85% is safe given our 96.67% accuracy) ---
+CONFIDENCE_THRESHOLD = 0.85
+
 def model_predict(image_path, model):
-    """Loads, preprocesses, and predicts the class of an image."""
+    """Loads, preprocesses, and predicts the class of an image with an OOD check."""
     try:
+        # (Standard preprocessing steps remain the same)
         img = Image.open(image_path).convert('RGB')
         img = img.resize(TARGET_SIZE)
         
         x = img_to_array(img)
-        x = x / 255.0  # Normalize
-        x = np.expand_dims(x, axis=0) # Add batch dimension
+        x = x / 255.0 
+        x = np.expand_dims(x, axis=0) 
 
+        # Make the prediction
         prediction = model.predict(x)[0]
         
+        # Find the highest confidence and its corresponding label
         predicted_index = np.argmax(prediction)
         confidence = prediction[predicted_index]
         predicted_label = CLASS_NAMES[predicted_index]
         
+        # --- OOD DETECTION LOGIC ---
+        # Check if the confidence is below our threshold
+        if confidence < CONFIDENCE_THRESHOLD:
+            # If the model is not confident, reject the prediction.
+            # We return a specific label and the low confidence score for display.
+            return "Prediction Uncertain: Please upload a clearer image of a plant leaf.", confidence
+        # --- END OOD LOGIC ---
+        
         return predicted_label, confidence
+        
     except Exception as e:
         print(f"Prediction Error: {e}")
         return "Prediction Failed", 0.0
-
+    
 # --- Flask Routes ---
 @app.route('/', methods=['GET', 'POST'])
 def upload_file():
