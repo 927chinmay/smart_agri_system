@@ -3,9 +3,9 @@ import numpy as np
 import cv2
 from PIL import Image
 from flask import Flask, render_template, request, redirect, url_for
-# We use the Model architecture, not load_model, to avoid serialization errors
+# We use the Model architecture
 import tensorflow as tf 
-from tensorflow.keras.applications import MobileNetV2 # Import the correct base model
+from tensorflow.keras.applications import MobileNetV2 
 from tensorflow.keras.layers import Flatten, Dense, Dropout
 from tensorflow.keras.models import Model 
 from tensorflow.keras.preprocessing.image import img_to_array
@@ -80,7 +80,7 @@ TREATMENT_ADVICE = {
     "Tomato___Tomato_mosaic_virus": "This is a viral disease with no cure. Remove and destroy infected plants. Wash hands and tools to prevent spread.",
     "Tomato___healthy": "Your plant appears healthy. Continue to monitor for common pests like hornworms and aphids.",
 
-    # Default message for uncertain predictions
+    # Default message 
     "Prediction Uncertain: Please upload a clearer image of a plant leaf.": "The system could not confidently identify the leaf. Please ensure the image is clear, well-lit, and shows a single leaf against a plain background."
 }
 
@@ -88,11 +88,11 @@ TREATMENT_ADVICE = {
 app = Flask(__name__)
 TARGET_SIZE = (224, 224) 
 UPLOAD_FOLDER = os.path.join(os.getcwd(), 'static')
-# CRUCIAL: Must match the file being created by train_model.py
+
 WEIGHTS_FILE_PATH = 'smart_agri_weights_v2.weights.h5' 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# --- Model Definition (Must match fine_tune_model.ipynb exactly) ---
+#  Model Definition 
 NUM_CLASSES = 38
 
 # 1. Load the base model
@@ -102,13 +102,13 @@ base_model = MobileNetV2(
     input_shape=(224, 224, 3) 
 )
 
-# 2. Unfreeze the top layers for fine-tuning (THIS IS THE CRITICAL CHANGE)
+# 2. Unfreezing the top layers for fine-tuning 
 base_model.trainable = True
-fine_tune_at = 100 # We must freeze the same layers as during training
+fine_tune_at = 100 
 for layer in base_model.layers[:fine_tune_at]:
     layer.trainable = False
 
-# 3. Define the Model using the Functional API structure
+# 3. Functional API structure
 x = base_model.output
 x = Flatten()(x)
 x = Dense(1024, activation='relu')(x)
@@ -116,31 +116,28 @@ x = Dropout(0.5)(x)
 predictions = Dense(NUM_CLASSES, activation='softmax')(x)
 MODEL = Model(inputs=base_model.input, outputs=predictions)
 
-# 4. Compile the Model with the same low learning rate
+# 4. Compiling  Model with the same low learning rate
 MODEL.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-5), # Use the fine-tuning learning rate
              loss='categorical_crossentropy', metrics=['accuracy'])
 
 
-# --- Load Trained Weights (Guaranteed Method) ---
+# --- Load Trained Weights
 
 try:
-    # Load weights directly into the defined model structure
     MODEL.load_weights(WEIGHTS_FILE_PATH)
     print("AI Model weights loaded successfully! System operational.")
 except Exception as e:
-    # This error means the file is not finished saving yet or does not exist
+    # error 
     print(f"FATAL ERROR loading model weights: {e}")
     print(f"Please check that '{WEIGHTS_FILE_PATH}' exists in your project folder and training is complete.")
     exit() 
 
-    # ADD THESE THREE LINES FOR DEBUGGING
+    
 print("---" * 20)
 print(f"VERIFICATION: Successfully loaded model weights from: {WEIGHTS_FILE_PATH}")
 print("---" * 20)
     
-# 4. Define the 38 class names based on your dataset (CRUCIAL for output interpretation)
-# This list must be in alphabetical order as determined by Keras during data loading
-# In app.py, replace your entire CLASS_NAMES list with this one:
+# classnames
 
 CLASS_NAMES = [
     'Apple___Apple_scab',
@@ -183,18 +180,18 @@ CLASS_NAMES = [
     'Tomato___healthy'
 ]
 
-# app.py (Paste this new function after your CLASS_NAMES list, around line 118)
+
 def is_likely_plant_leaf(image_path, green_threshold=0.15):
     """
     Checks if an image is likely a plant leaf based on the percentage of green color.
     """
     try:
-        # Load the image using OpenCV
+        
         image = cv2.imread(image_path)
         # Convert image from BGR to HSV color space
         hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
-        # Define the range for the color green in HSV
+    
         lower_green = np.array([35, 40, 40])
         upper_green = np.array([85, 255, 255])
 
@@ -206,22 +203,21 @@ def is_likely_plant_leaf(image_path, green_threshold=0.15):
         
         print(f"Detected green percentage: {green_percentage:.2f}")
 
-        # If green percentage is above our threshold, it's likely a leaf
+        
         return green_percentage > green_threshold
     except Exception as e:
         print(f"Color analysis error: {e}")
         return False
     
 # --- Prediction Function ---
-# app.py
 
-# --- Define the threshold for accepting a prediction (85% is safe given our 96.67% accuracy) ---
+
 CONFIDENCE_THRESHOLD = 0.85
 
 def model_predict(image_path, model):
     """Loads, preprocesses, and predicts the class of an image with an OOD check."""
     try:
-        # (Standard preprocessing steps remain the same)
+        
         img = Image.open(image_path).convert('RGB')
         img = img.resize(TARGET_SIZE)
         
@@ -232,16 +228,15 @@ def model_predict(image_path, model):
         # Make the prediction
         prediction = model.predict(x)[0]
         
-        # Find the highest confidence and its corresponding label
+        # the highest confidence and its corresponding label
         predicted_index = np.argmax(prediction)
         confidence = prediction[predicted_index]
         predicted_label = CLASS_NAMES[predicted_index]
         
         # --- OOD DETECTION LOGIC ---
-        # Check if the confidence is below our threshold
+
         if confidence < CONFIDENCE_THRESHOLD:
             # If the model is not confident, reject the prediction.
-            # We return a specific label and the low confidence score for display.
             return "Prediction Uncertain: Please upload a clearer image of a plant leaf.", confidence
         # --- END OOD LOGIC ---
         
@@ -252,7 +247,7 @@ def model_predict(image_path, model):
         return "Prediction Failed", 0.0
     
 # --- Flask Routes ---
-# app.py (Replace your existing upload_file function with this one)
+
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_file():
@@ -269,7 +264,7 @@ def upload_file():
             temp_path = os.path.join(app.config['UPLOAD_FOLDER'], 'uploaded_image.jpg')
             file.save(temp_path)
             
-            # We are skipping the gatekeeper for now to focus on prediction accuracy
+        
             label, confidence = model_predict(temp_path, MODEL)
             advice = TREATMENT_ADVICE.get(label, "Consult a local agricultural expert for specific treatment plans.")
             
@@ -281,9 +276,9 @@ def upload_file():
             
     return render_template('index.html', prediction=prediction_data)
 
-# --- Run the App ---
+
 if __name__ == '__main__':
-    # Make sure the static folder exists
+    
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)
         
