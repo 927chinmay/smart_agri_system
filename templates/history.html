@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediction History</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        /* Adds some styles for the history table */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 90%;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            border-radius: 8px;
+        }
+        h1 {
+            color: #2c5d3d;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+            vertical-align: middle;
+        }
+        th {
+            background-color: #f9f9f9;
+            color: #2c5d3d;
+        }
+        tr:nth-child(even) {
+            background-color: #fcfcfc;
+        }
+        .history-image {
+            max-width: 100px;
+            max-height: 100px;
+            border-radius: 4px;
+        }
+        .confidence-high {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .confidence-low {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #007bff;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">&larr; Back to Diagnosis</a>
+        <h1>Prediction History</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Date & Time</th>
+                    <th>Image</th>
+                    <th>Diagnosis Result</th>
+                    <th>Confidence</th>
+                    <th>Recommended Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in predictions %}
+                <tr>
+                    <td>{{ entry['timestamp'] }}</td>
+                    <td>
+                        <img src="{{ url_for('static', filename=entry['image_path']) }}" 
+                             alt="Uploaded Image" class="history-image">
+                    </td>
+                    <td>{{ entry['label'] }}</td>
+                    <td class="{% if entry['confidence'] > 0.7 %}confidence-high{% else %}confidence-low{% endif %}">
+                        {{ "%.2f"|format(entry['confidence'] * 100) }}%
+                    </td>
+                    <td>{{ entry['advice'] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
