@@ -8,3 +8,9 @@ plantvillage dataset/
 #Ignore temporary uploaded images in the static folder
 static/uploaded_image.jpg
 
+# Ignore the SQLite database file
+history.db
+*.db
+
+# Ignore all user-uploaded content in the static/uploads folder
+static/uploads/

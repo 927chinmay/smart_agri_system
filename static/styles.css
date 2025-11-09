@@ -58,3 +58,39 @@ button:hover {
     font-style: italic;
     color: #4a4a4a;
 }
+
+/* Add this to your styles.css */
+.history-link {
+    float: right;
+    text-decoration: none;
+    color: #007bff;
+    font-weight: 500;
+    margin-top: 10px;
+    font-size: 1.1em;
+}
+
+.history-link:hover {
+    text-decoration: underline;
+}
+
+/* Add this to your styles.css */
+.image-comparison {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.uploaded-image, .heatmap-image {
+    flex-basis: 48%;
+    text-align: center;
+}
+
+.uploaded-image img, .heatmap-image img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-top: 10px;
+}

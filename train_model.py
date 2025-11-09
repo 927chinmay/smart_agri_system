@@ -81,16 +81,16 @@ print(f"\nStarting Model Training on CPU (saving weights to: {MODEL_SAVE_PATH}).
 print("This model is highly efficient, but expect each epoch to take significant time on a CPU.")
 
 # Callbacks
-# ModelCheckpoint is used to save the best model weights found so far
+
 model_checkpoint = tf.keras.callbacks.ModelCheckpoint(
     MODEL_SAVE_PATH, 
     monitor='val_accuracy', 
     save_best_only=True,
-    save_weights_only=True, # CRUCIAL: Saves only weights to avoid serialization error
+    save_weights_only=True, 
     verbose=1
 )
 
-# Train the model! We run for 20 epochs maximum.
+# Train We run for 20 epochs maximum.
 history = model.fit(
     train_generator,
     epochs=20, 
